@@ -1,23 +1,24 @@
 <?php
 $url = getenv("DATABASE_URL");
 
-if (!$url) {
-    die("❌ DATABASE_URL not set in environment.");
+// Parse the URL parts
+$parts = parse_url($url);
+
+// Check if all necessary parts exist
+if (!isset($parts["host"], $parts["user"], $parts["pass"], $parts["path"])) {
+    die("❌ Database connection details are incomplete.");
 }
 
-$parts = parse_url($url);
-parse_str(parse_url($url, PHP_URL_QUERY), $query);
+$host = $parts["host"];
+$user = $parts["user"];
+$pass = $parts["pass"];
+$dbname = ltrim($parts["path"], "/");
+$port = isset($parts["port"]) ? $parts["port"] : 5432;
 
-$host = $parts["host"] ?? null;
-$port = $parts["port"] ?? 5432;
-$user = $parts["user"] ?? null;
-$pass = $parts["pass"] ?? null;
-$dbname = ltrim($parts["path"] ?? '', '/');
-$sslmode = $query["sslmode"] ?? "require";
+// Connect using key=value format (required by pg_connect)
+$conn_str = "host=$host port=$port dbname=$dbname user=$user password=$pass sslmode=require";
 
-$conn_string = "host=$host port=$port dbname=$dbname user=$user password=$pass sslmode=$sslmode";
-
-$conn = pg_connect($conn_string);
+$conn = pg_connect($conn_str);
 
 if (!$conn) {
     die("❌ Connection failed: " . pg_last_error());
