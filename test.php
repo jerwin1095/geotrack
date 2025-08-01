@@ -1,3 +1,4 @@
 <?php
-echo "Hello! This is your first PHP page!";
+require_once "db_connect.php";
+echo "✅ Connected successfully!";
 ?>
