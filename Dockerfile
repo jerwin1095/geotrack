@@ -1,20 +1,20 @@
-# Use an official PHP image with Apache
+# Use official PHP with Apache
 FROM php:8.2-apache
 
-# Enable Apache mod_rewrite
+# Enable mod_rewrite (needed for clean URLs)
 RUN a2enmod rewrite
 
-# Copy your PHP app into the container
+# ✅ Install PostgreSQL extension
+RUN apt-get update && apt-get install -y libpq-dev && docker-php-ext-install pgsql
+
+# Copy your app code
 COPY . /var/www/html/
 
 # Set working directory
 WORKDIR /var/www/html
 
-# Optional: install PHP extensions (e.g., mysqli, pdo)
-RUN docker-php-ext-install mysqli pdo pdo_mysql
-
-# Permissions fix (if needed)
+# Fix permissions
 RUN chown -R www-data:www-data /var/www/html
 
-# Expose Apache port
+# Expose port
 EXPOSE 80
