@@ -6,7 +6,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $username = $_POST['username'] ?? '';
     $password = $_POST['password'] ?? '';
 
-    // Use parameterized query for security
     $result = pg_query_params(
         $conn,
         "SELECT * FROM users WHERE username = $1 AND password = $2",
@@ -15,10 +14,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
     if ($result && pg_num_rows($result) === 1) {
         $user = pg_fetch_assoc($result);
-        // Set session variables as needed
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
-        // Redirect to dashboard or wherever you like
         header("Location: dashboard.php");
         exit();
     } else {
@@ -26,13 +23,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Login | Geo-TrackDTR</title>
-  <link rel="stylesheet" href="https://cdn.tailwindcss.com">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100 flex items-center justify-center min-h-screen">
   <div class="bg-white p-8 rounded shadow-md w-full max-w-md">
