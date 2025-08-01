@@ -1,12 +1,16 @@
 <?php
-$host = 'localhost';
-$user = 'root';
-$password = 'your_password_here';
-$dbname = 'geo_trackdtr';
+$url = getenv("DATABASE_URL");
+$parts = parse_url($url);
 
-$conn = new mysqli($host, $user, $password, $dbname);
+$host = $parts["host"];
+$user = $parts["user"];
+$pass = $parts["pass"];
+$dbname = ltrim($parts["path"], "/");
+$port = isset($parts["port"]) ? $parts["port"] : 5432;
 
-if ($conn->connect_error) {
-    die("Connection failed: " . $conn->connect_error);
+$conn = pg_connect("host=$host port=$port dbname=$dbname user=$user password=$pass");
+
+if (!$conn) {
+    die("Connection failed: " . pg_last_error());
 }
 ?>
