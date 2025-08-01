@@ -1,10 +1,12 @@
 <?php
 $url = getenv("DATABASE_URL");
 
-// Parse the URL parts
+if (!$url) {
+    die("❌ DATABASE_URL is not set.");
+}
+
 $parts = parse_url($url);
 
-// Check if all necessary parts exist
 if (!isset($parts["host"], $parts["user"], $parts["pass"], $parts["path"])) {
     die("❌ Database connection details are incomplete.");
 }
@@ -12,15 +14,23 @@ if (!isset($parts["host"], $parts["user"], $parts["pass"], $parts["path"])) {
 $host = $parts["host"];
 $user = $parts["user"];
 $pass = $parts["pass"];
-$dbname = ltrim($parts["path"], "/");
+$dbname = ltrim($parts["path"], "/");  // removes leading slash from /neondb
 $port = isset($parts["port"]) ? $parts["port"] : 5432;
 
-// Connect using key=value format (required by pg_connect)
-$conn_str = "host=$host port=$port dbname=$dbname user=$user password=$pass sslmode=require";
+// Add SSL mode from query string
+$sslmode = "require"; // default to require
+if (isset($parts["query"])) {
+    parse_str($parts["query"], $queryParams);
+    if (isset($queryParams["sslmode"])) {
+        $sslmode = $queryParams["sslmode"];
+    }
+}
 
-$conn = pg_connect($conn_str);
+// Connect using pg_connect
+$conn_string = "host=$host port=$port dbname=$dbname user=$user password=$pass sslmode=$sslmode";
+$conn = pg_connect($conn_string);
 
 if (!$conn) {
-    die("❌ Connection failed: " . pg_last_error());
+    die("❌ Failed to connect to database: " . pg_last_error());
 }
 ?>
