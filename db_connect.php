@@ -2,22 +2,27 @@
 $url = getenv("DATABASE_URL");
 
 if (!$url) {
-    die("DATABASE_URL is not set.");
+    die("DATABASE_URL not found.");
 }
 
 $parts = parse_url($url);
-parse_str($parts["query"] ?? "", $query);
 
-$host = $parts["host"] ?? '';
-$user = $parts["user"] ?? '';
-$pass = $parts["pass"] ?? '';
-$dbname = ltrim($parts["path"] ?? '', '/');
-$port = $parts["port"] ?? 5432;
-$sslmode = $query["sslmode"] ?? "require";
-
-if (empty($host) || empty($user) || empty($pass) || empty($dbname)) {
+if (!$parts || !isset($parts["host"], $parts["user"], $parts["pass"], $parts["path"])) {
     die("Database connection details are incomplete.");
 }
+
+$host = $parts["host"];
+$user = $parts["user"];
+$pass = $parts["pass"];
+$dbname = ltrim($parts["path"], '/');
+$port = $parts["port"] ?? 5432;
+
+// Optional: parse additional options
+$query = [];
+if (isset($parts["query"])) {
+    parse_str($parts["query"], $query);
+}
+$sslmode = $query["sslmode"] ?? "require";
 
 $conn = pg_connect("host=$host port=$port dbname=$dbname user=$user password=$pass sslmode=$sslmode");
 
