@@ -97,7 +97,6 @@ $usersRes = pg_query($conn, "SELECT id, name, email, phone, location FROM users 
         <div class="bg-white rounded shadow overflow-hidden">
           <div class="p-4 border-b flex justify-between">
             <h2 class="font-semibold">User Management</h2>
-            <a href="add_user.php" class="bg-blue-600 text-white px-4 py-1 rounded hover:bg-blue-700">Add User</a>
           </div>
           <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
