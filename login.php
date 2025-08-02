@@ -2,24 +2,18 @@
 session_start();
 $error = '';
 
-// Include your database connection
-require_once 'db_connect.php'; // This file should set up $conn for Neon/Postgres
+require_once 'db_connect.php';
 
-// Handle login POST request
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'], $_POST['password'])) {
-    // Sanitize user input
     $username = trim($_POST['username']);
     $password = $_POST['password'];
 
-    // Parameterized query (prevents SQL injection)
     $sql = "SELECT password FROM admins WHERE username = $1";
     $result = pg_query_params($conn, $sql, [$username]);
 
     if ($result && pg_num_rows($result) === 1) {
         $row = pg_fetch_assoc($result);
         $hashed_password = $row['password'];
-
-        // Check password using PHP's password_verify
         if (password_verify($password, $hashed_password)) {
             $_SESSION['admin'] = $username;
             header('Location: dashboard.php');
