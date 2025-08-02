@@ -1,7 +1,7 @@
 <?php
-$host = 'ep-dawn-forest-12345.ap-southeast-1.aws.neon.tech';
+$host = 'ep-ancient-tree-af3pt6am-pooler.c-2.us-west-2.aws.neon.tech';
 $dbname = 'neondb';
-$user = 'jerwin1095';
+$user = 'neondb_owner';
 $password = 'npg_xD48zaycMqfl';
 $port = '5432';
 
@@ -10,5 +10,3 @@ if (!$conn) {
     die('Connection failed: ' . pg_last_error($conn));
 }
 ?>
-
-
