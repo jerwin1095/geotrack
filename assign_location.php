@@ -1,8 +1,34 @@
 <?php
-require_once 'db_connect.php';
-require 'PHPMailer/PHPMailerAutoload.php'; // Or 'vendor/autoload.php' if using Composer
+// Show errors for debugging
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
 
-$response = ['success' => false, 'message' => ''];
+// Always return JSON
+header('Content-Type: application/json');
+
+// Collect errors to send as JSON if any
+set_error_handler(function($errno, $errstr, $errfile, $errline) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => "PHP Error [$errno]: $errstr in $errfile on line $errline"
+    ]);
+    exit;
+});
+
+set_exception_handler(function($e) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'message' => "Uncaught Exception: " . $e->getMessage()
+    ]);
+    exit;
+});
+
+require_once 'db_connect.php';
+
+$response = ['success' => false, 'message' => 'Unknown error'];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $location_name = $_POST['location_name'] ?? '';
@@ -15,41 +41,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $errors = [];
     foreach ($selected_users as $user_id) {
-        // Update user location in DB
+        // Use parameterized queries to avoid SQL injection
         $update_res = pg_query_params($conn, "UPDATE users SET location=$1 WHERE id=$2", [$location_name, $user_id]);
-
-        // Get user's email & name
-        $user_res = pg_query_params($conn, "SELECT email, name FROM users WHERE id=$1", [$user_id]);
-        if ($user_row = pg_fetch_assoc($user_res)) {
-            $email = $user_row['email'];
-            $name = $user_row['name'];
-
-            // PHPMailer setup
-            $mail = new PHPMailer;
-            $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com';
-            $mail->SMTPAuth = true;
-            $mail->Username = 'capstoneprojecttwenty25@gmail.com'; // Your Gmail
-            $mail->Password = 'Camins31'; // Use your Gmail password or App Password
-            $mail->SMTPSecure = 'tls';
-            $mail->Port = 587;
-
-            $mail->setFrom('capstoneprojecttwenty25@gmail.com', 'Geo-TrackDTR');
-            $mail->addAddress($email, $name);
-
-            $mail->Subject = "You have been assigned a new location";
-            $login_url = "https://geotrack-wclf.onrender.com/login.php"; // <-- your live login page
-            $mail->Body = "Hello $name,\n\nYou have been assigned to location: $location_name.\n\nYou can time in at: $login_url\n\nThank you!";
-
-            if(!$mail->send()) {
-                $errors[] = "Mail error for $email: " . $mail->ErrorInfo;
-            }
+        if (!$update_res) {
+            $errors[] = "DB error for user $user_id: " . pg_last_error($conn);
+            continue;
         }
     }
-    $response['success'] = count($errors) === 0;
-    $response['message'] = (count($errors) === 0)
-        ? "Users assigned and email sent!"
-        : implode("\n", $errors);
+    if (count($errors) === 0) {
+        $response['success'] = true;
+        $response['message'] = "Users assigned successfully!";
+    } else {
+        $response['message'] = implode("\n", $errors);
+    }
+    echo json_encode($response);
+    exit;
 }
+
+// If not POST
+$response['message'] = "Invalid request method.";
 echo json_encode($response);
+exit;
 ?>
