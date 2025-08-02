@@ -28,39 +28,49 @@ $attendanceRes = pg_query($conn, "
 ");
 
 // User List
-$usersRes = pg_query($conn, "SELECT id, name, email, phone FROM users ORDER BY id ASC");
+$usersRes = pg_query($conn, "SELECT id, name, email, phone, location FROM users ORDER BY id ASC");
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <title>Geo-TrackDTR | Admin Dashboard</title>
   <meta charset="UTF-8">
+  <title>Geo-TrackDTR | Admin Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+  <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+  <style>
+    #locationMap { height: 400px; z-index: 10; }
+    .leaflet-pane { z-index: 10 !important; }
+    .leaflet-control-container { z-index: 20 !important; }
+    #assignUsersModal { z-index: 9999 !important; }
+  </style>
 </head>
 <body class="bg-gray-100 font-sans">
   <div class="flex h-screen overflow-hidden">
+    <!-- Sidebar -->
     <aside class="w-64 bg-gray-800 text-white flex flex-col">
       <div class="p-4 text-lg font-bold border-b border-gray-700 flex items-center gap-2">
-        <i class="fas fa-user-shield"></i> Admin Dashboard
+        <i class="fas fa-user-shield"></i>
+        Admin Dashboard
       </div>
       <nav class="flex-1 overflow-y-auto p-4 space-y-2">
-        <a href="#" class="flex items-center gap-2 text-white bg-gray-700 p-2 rounded">
-          <i class="fas fa-tachometer-alt"></i> Dashboard
-        </a>
-        <a href="user.php" class="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-700 p-2 rounded">
-          <i class="fas fa-users"></i> User Management
-        </a>
-        <!-- ... other nav links ... -->
-        <a href="logout.php" class="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-700 p-2 rounded mt-4">
-          <i class="fas fa-sign-out-alt"></i> Logout
-        </a>
+        <a href="dashboard.php" class="flex items-center gap-2 text-white bg-gray-700 p-2 rounded"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="user.php" class="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-700 p-2 rounded"><i class="fas fa-users"></i> User Management</a>
+        <a href="attendance.php" class="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-700 p-2 rounded"><i class="fas fa-clock"></i> Time Records</a>
+        <a href="location_history.php" class="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-700 p-2 rounded"><i class="fas fa-map-marker-alt"></i> Location History</a>
+        <div class="text-xs text-gray-400 mt-4">Settings</div>
+        <a href="#" id="openAdminProfile" class="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-700 p-2 rounded"><i class="fas fa-user-cog"></i> Admin Profile</a>
+        <a href="#" class="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-700 p-2 rounded"><i class="fas fa-cog"></i> System Settings</a>
+        <a href="logout.php" class="flex items-center gap-2 text-gray-300 hover:text-white hover:bg-gray-700 p-2 rounded mt-4"><i class="fas fa-sign-out-alt"></i> Logout</a>
       </nav>
     </aside>
-
+    <!-- Main Content -->
     <main class="flex-1 overflow-y-auto">
+      <!-- Top Bar -->
       <header class="bg-white shadow px-6 py-4 flex items-center justify-between">
         <h1 class="text-xl font-semibold text-gray-800">Admin Dashboard</h1>
         <div class="flex items-center gap-4">
@@ -71,24 +81,17 @@ $usersRes = pg_query($conn, "SELECT id, name, email, phone FROM users ORDER BY i
           <img src="https://placehold.co/32x32" alt="Admin" class="rounded-full h-8 w-8">
         </div>
       </header>
-
+      <!-- Dashboard Cards -->
       <section class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="bg-white p-4 rounded shadow flex justify-between items-center">
-          <div>
-            <p class="text-gray-500">Total Users</p>
-            <h2 class="text-2xl font-bold"><?= $userCount ?></h2>
-          </div>
+          <div><p class="text-gray-500">Total Users</p><h2 class="text-2xl font-bold"><?= $userCount ?></h2></div>
           <i class="fas fa-users text-blue-600 text-2xl"></i>
         </div>
         <div class="bg-white p-4 rounded shadow flex justify-between items-center">
-          <div>
-            <p class="text-gray-500">Active Users</p>
-            <h2 class="text-2xl font-bold"><?= $activeCount ?></h2>
-          </div>
+          <div><p class="text-gray-500">Active Users</p><h2 class="text-2xl font-bold"><?= $activeCount ?></h2></div>
           <i class="fas fa-user-check text-green-600 text-2xl"></i>
         </div>
       </section>
-
       <!-- User Management -->
       <section class="p-6">
         <div class="bg-white rounded shadow overflow-hidden">
@@ -130,7 +133,16 @@ $usersRes = pg_query($conn, "SELECT id, name, email, phone FROM users ORDER BY i
           </div>
         </div>
       </section>
-
+      <!-- Map Section -->
+      <section class="p-6">
+        <div class="bg-white rounded shadow p-4">
+          <h2 class="text-lg font-semibold mb-4">Search & Assign Location</h2>
+          <div id="locationMap" class="w-full h-96 rounded border"></div>
+          <div class="mt-4 flex justify-start">
+            <button id="openAssignModal" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Assign Employee</button>
+          </div>
+        </div>
+      </section>
       <!-- Attendance as of Today -->
       <section class="p-6">
         <div class="bg-white rounded shadow overflow-hidden">
@@ -181,5 +193,167 @@ $usersRes = pg_query($conn, "SELECT id, name, email, phone FROM users ORDER BY i
       </section>
     </main>
   </div>
+  <!-- Assign Users Modal -->
+  <div id="assignUsersModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="bg-white w-full max-w-md rounded-lg shadow-lg p-6 relative max-h-[80vh] overflow-y-auto">
+      <button onclick="toggleAssignUsersModal()" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+      <h2 class="text-lg font-semibold mb-4">Assign Employees to Location</h2>
+      <div class="mb-4">
+        <label class="block text-sm text-gray-600 mb-1">Location</label>
+        <input type="text" id="selectedLocationInput" class="w-full border p-2 rounded" disabled>
+      </div>
+      <form id="assignUsersForm">
+        <input type="hidden" name="location_name" id="hiddenLocationInput">
+        <div class="space-y-3">
+          <?php
+          $userQuery = "SELECT id, name, location FROM users";
+          $userResult = pg_query($conn, $userQuery);
+          if ($userResult && pg_num_rows($userResult) > 0):
+            while ($user = pg_fetch_assoc($userResult)):
+              $isAssigned = !empty($user['location']);
+          ?>
+          <div class="flex items-center justify-between bg-gray-50 hover:bg-gray-100 p-2 rounded">
+            <span class="font-medium text-gray-800"><?= htmlspecialchars($user['name']) ?></span>
+            <div class="flex items-center gap-2">
+              <input type="checkbox" name="selected_users[]" value="<?= $user['id'] ?>"
+                class="appearance-none w-5 h-5 border-2 border-gray-400 rounded-full 
+                      checked:bg-blue-600 checked:border-blue-600 checked:ring-2 checked:ring-blue-300
+                      focus:outline-none transition" />
+              <?php if ($isAssigned): ?>
+              <button type="button" onclick="unassignUser(<?= $user['id'] ?>)" class="text-red-500 hover:text-red-700">
+                <i class="fas fa-trash-alt"></i>
+              </button>
+              <?php endif; ?>
+            </div>
+          </div>
+          <?php endwhile; endif; ?>
+        </div>
+        <div class="mt-6 flex justify-end gap-2">
+          <button type="button" onclick="toggleAssignUsersModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Cancel</button>
+          <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Assign</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  <!-- Admin Profile Modal -->
+  <div id="adminProfileModal" class="fixed inset-0 z-1000 flex items-center justify-center bg-black bg-opacity-50 hidden">
+    <div class="bg-white rounded-lg w-full max-w-md p-6 relative shadow-lg">
+      <button onclick="toggleAdminProfileModal()" class="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-xl">&times;</button>
+      <h2 class="text-xl font-semibold mb-4">Admin Profile</h2>
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm text-gray-700">Full Name</label>
+          <input type="text" class="w-full mt-1 p-2 border rounded-md" value="Admin User">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-700">Email</label>
+          <input type="email" class="w-full mt-1 p-2 border rounded-md" value="admin@example.com">
+        </div>
+        <div>
+          <label class="block text-sm text-gray-700">Password</label>
+          <input type="password" class="w-full mt-1 p-2 border rounded-md" value="password123">
+        </div>
+        <div class="flex justify-end gap-2">
+          <button onclick="toggleAdminProfileModal()" class="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Cancel</button>
+          <button class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Save</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    let selectedLocation = null;
+    let currentMarker = null;
+    function toggleAssignUsersModal() {
+      const modal = document.getElementById('assignUsersModal');
+      if (modal) modal.classList.toggle('hidden');
+    }
+    function toggleAdminProfileModal() {
+      const modal = document.getElementById('adminProfileModal');
+      if (modal) modal.classList.toggle('hidden');
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      const map = L.map('locationMap').setView([7.1907, 125.4553], 13);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+      }).addTo(map);
+      L.Control.geocoder({
+        defaultMarkGeocode: true
+      })
+      .on('markgeocode', function (e) {
+        const latlng = e.geocode.center;
+        const name = e.geocode.name;
+        if (currentMarker) map.removeLayer(currentMarker);
+        currentMarker = L.marker(latlng).addTo(map).bindPopup(name).openPopup();
+        selectedLocation = { name: name, lat: latlng.lat, lng: latlng.lng };
+        document.getElementById('selectedLocationInput').value = name;
+      })
+      .addTo(map);
+      map.on('click', function (e) {
+        const latlng = e.latlng;
+        if (currentMarker) map.removeLayer(currentMarker);
+        const name = `Lat: ${latlng.lat.toFixed(4)}, Lng: ${latlng.lng.toFixed(4)}`;
+        currentMarker = L.marker(latlng).addTo(map).bindPopup(name).openPopup();
+        selectedLocation = { name: name, lat: latlng.lat, lng: latlng.lng };
+        document.getElementById('selectedLocationInput').value = name;
+      });
+      const assignBtn = document.getElementById('openAssignModal');
+      if (assignBtn) {
+        assignBtn.addEventListener('click', function () {
+          if (!selectedLocation) {
+            alert('Please select a location by clicking on the map or using the search.');
+            return;
+          }
+          document.getElementById('selectedLocationInput').value = selectedLocation.name;
+          toggleAssignUsersModal();
+        });
+      }
+    });
+    // Assign location AJAX
+    document.getElementById('assignUsersForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const form = e.target;
+      const formData = new FormData(form);
+      const locationName = document.getElementById('selectedLocationInput').value;
+      document.getElementById('hiddenLocationInput').value = locationName;
+      formData.set('location_name', locationName);
+      fetch('assign_location.php', {
+        method: 'POST',
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        alert(data.message);
+        if (data.success) {
+          toggleAssignUsersModal();
+          location.reload();
+        }
+      })
+      .catch(err => {
+        console.error('Error:', err);
+        alert('An error occurred.');
+      });
+    });
+    // Unassign user AJAX
+    function unassignUser(userId) {
+      fetch('unassign_location.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'user_id=' + encodeURIComponent(userId)
+      })
+      .then(response => response.json())
+      .then(data => {
+        alert(data.message);
+        if (data.success) {
+          location.reload();
+        }
+      })
+      .catch(err => {
+        console.error('Error:', err);
+        alert('An error occurred.');
+      });
+    }
+    // Admin Profile Modal
+    document.getElementById('openAdminProfile').addEventListener('click', toggleAdminProfileModal);
+  </script>
 </body>
 </html>
