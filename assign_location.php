@@ -1,6 +1,6 @@
 <?php
 require_once 'db_connect.php';
-require 'PHPMailer/PHPMailerAutoload.php'; // Or use 'vendor/autoload.php' if installed via Composer
+require 'PHPMailer/PHPMailerAutoload.php'; // Or 'vendor/autoload.php' if using Composer
 
 $response = ['success' => false, 'message' => ''];
 
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mail->Host = 'smtp.gmail.com';
             $mail->SMTPAuth = true;
             $mail->Username = 'capstoneprojecttwenty25@gmail.com'; // Your Gmail
-            $mail->Password = 'Camins31'; // Use your Gmail or App password here
+            $mail->Password = 'Camins31'; // Use your Gmail password or App Password
             $mail->SMTPSecure = 'tls';
             $mail->Port = 587;
 
@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $mail->addAddress($email, $name);
 
             $mail->Subject = "You have been assigned a new location";
-            $login_url = "http://yourdomain.com/login.php"; // <-- Replace with your actual domain and login path!
+            $login_url = "https://geotrack-wclf.onrender.com/login.php"; // <-- your live login page
             $mail->Body = "Hello $name,\n\nYou have been assigned to location: $location_name.\n\nYou can time in at: $login_url\n\nThank you!";
 
             if(!$mail->send()) {
