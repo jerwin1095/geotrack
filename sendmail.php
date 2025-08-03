@@ -17,20 +17,20 @@ try {
     // SMTP configuration
     $mail->SMTPDebug  = 0;
     $mail->isSMTP();
-    $mail->Host       = 'smtp.gmail.com';
+    $mail->Host       = 'smtp-relay.brevo.com';
     $mail->SMTPAuth   = true;
-    $mail->Username   = 'capstoneprojecttwenty25@gmail.com';
-    $mail->Password   = 'wcqhdqyfghhgygkcb'; // App Password, no spaces
+    $mail->Username   = '93d527001@smtp-brevo.com';   // From Brevo dashboard
+    $mail->Password   = 'bEgqyd3WImxRLGwD';           // From Brevo dashboard
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port       = 587;
 
     // Sender and recipient
-    $mail->setFrom('capstoneprojecttwenty25@gmail.com', 'GeoTrack Mailer');
+    $mail->setFrom('capstoneprojecttwenty25@gmail.com', 'GeoTrack Mailer'); // Must be verified in Brevo
     $mail->addAddress($to_email, $to_name);
 
     // Email content
-    $mail->Subject = '🚀 GeoTrack SMTP Test';
-    $mail->Body    = "Hello $to_name,\n\nThis is a test email sent from GeoTrack using PHPMailer and Gmail SMTP.\n\nIf you're seeing this, SMTP is working correctly! 🎉";
+    $mail->Subject = '🚀 GeoTrack SMTP Test (via Brevo)';
+    $mail->Body    = "Hello $to_name,\n\nThis is a test email sent from GeoTrack using PHPMailer and Brevo SMTP.\n\nIf you're seeing this, SMTP is working correctly! 🎉";
 
     // Send email
     $mail->send();
