@@ -1,10 +1,11 @@
 <?php
-session_start();
-$error = '';
-
-// Secure session (optional enhancement)
+// Secure session config - MUST be set BEFORE session_start
 ini_set('session.cookie_httponly', 1);
 ini_set('session.cookie_secure', 1); // Only if you're using HTTPS
+ini_set('session.use_strict_mode', 1);
+
+session_start();
+$error = '';
 
 require_once 'db_connect.php';
 
@@ -12,7 +13,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'], $_POST['p
     $username = trim($_POST['username']);
     $password = $_POST['password'];
 
-    // Sanitize username format
     if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
         $error = 'Invalid username format.';
     } else {
@@ -78,9 +78,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'], $_POST['p
       </div>
       <button type="submit" class="w-full py-2 bg-gray-800 text-white rounded-md hover:bg-gray-700">Login</button>
     </form>
-    <div class="mt-4 text-center">
-      <a href="signup.php" class="text-sm text-gray-600 hover:underline">Don't have an account? Sign up</a>
-    </div>
   </div>
 </body>
 </html>
