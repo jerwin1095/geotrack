@@ -28,9 +28,9 @@ function sendEmail($to, $subject, $body) {
         $mail->addAddress($to); // Optionally add name as 2nd argument
 
         // Email content
+        $mail->isHTML(true); // Enable HTML
         $mail->Subject = $subject;
         $mail->Body    = $body;
-        $mail->isHTML(false); // Set to true if sending HTML emails
 
         $mail->send();
         return true;
