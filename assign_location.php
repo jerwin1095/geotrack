@@ -1,109 +1,81 @@
 <?php
-// Show errors for debugging
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
-error_reporting(E_ALL);
+// Include your DB connection
+include 'db_connect.php';
 
-header('Content-Type: application/json');
-
-// Error handlers
-set_error_handler(function($errno, $errstr, $errfile, $errline) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => "PHP Error [$errno]: $errstr in $errfile on line $errline"
-    ]);
-    exit;
-});
-set_exception_handler(function($e) {
-    http_response_code(500);
-    echo json_encode([
-        'success' => false,
-        'message' => "Uncaught Exception: " . $e->getMessage()
-    ]);
-    exit;
-});
-
-// Include database connection
-require_once 'db_connect.php';
-
-// Include PHPMailer
-require 'PHPMailer/PHPMailer.php';
-require 'PHPMailer/SMTP.php';
-require 'PHPMailer/Exception.php';
-
+// Include PHPMailer and mailer function
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-$response = ['success' => false, 'message' => 'Unknown error'];
+require 'PHPMailer/src/Exception.php';
+require 'PHPMailer/src/PHPMailer.php';
+require 'PHPMailer/src/SMTP.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $location_name = $_POST['location_name'] ?? '';
-    $selected_users = $_POST['selected_users'] ?? [];
-    if (empty($location_name) || empty($selected_users)) {
-        $response['message'] = "Please provide a location and select at least one user.";
-        echo json_encode($response);
-        exit;
+// Define the email sending function
+function sendAssignmentEmail($to_email, $to_name, $lat, $lng) {
+    $mail = new PHPMailer(true);
+    try {
+        // Brevo SMTP settings
+        $mail->isSMTP();
+        $mail->Host       = 'smtp-relay.brevo.com';
+        $mail->SMTPAuth   = true;
+        $mail->Username   = '93d527001@smtp-brevo.com';  // Your Brevo SMTP login
+        $mail->Password   = 'bEgqyd3WImxRLGwD';          // Your Brevo SMTP password
+        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Port       = 587;
+
+        $mail->setFrom('capstoneprojecttwenty25@gmail.com', 'GeoTrack Mailer');
+        $mail->addAddress($to_email, $to_name);
+
+        $mail->Subject = "📍 New Location Assigned to You";
+        $mail->Body    = "Hi $to_name,\n\nYou’ve been assigned a new location:\nLatitude: $lat\nLongitude: $lng\n\nPlease check your GeoTrack dashboard.";
+
+        $mail->send();
+        return true;
+    } catch (Exception $e) {
+        error_log("Mailer Error: " . $mail->ErrorInfo);
+        return false;
     }
-
-    $errors = [];
-    foreach ($selected_users as $user_id) {
-        // Update DB
-        $update_res = pg_query_params($conn, "UPDATE users SET location=$1 WHERE id=$2", [$location_name, $user_id]);
-        if (!$update_res) {
-            $errors[] = "DB error for user $user_id: " . pg_last_error($conn);
-            continue;
-        }
-
-        // Get user email and name
-        $user_q = pg_query_params($conn, "SELECT email, name FROM users WHERE id=$1", [$user_id]);
-        $user = pg_fetch_assoc($user_q);
-        if (!$user) {
-            $errors[] = "User not found for ID $user_id.";
-            continue;
-        }
-
-        // Send email using PHPMailer
-        $mail = new PHPMailer(true);
-        try {
-            // Server settings
-            $mail->isSMTP();
-            $mail->Host = 'smtp.gmail.com';
-            $mail->SMTPAuth = true;
-            $mail->Username = 'capstoneprojecttwenty25@gmail.com';         // <-- Replace with your Gmail address
-            $mail->Password = 'Camins31';      // <-- Replace with your Gmail App Password
-            $mail->SMTPSecure = 'tls';
-            $mail->Port = 587;
-
-            // Recipients
-            $mail->setFrom('capstoneprojecttwenty25@gmail.com', 'Geo-TrackDTR'); // <-- Replace with your Gmail address
-            $mail->addAddress($user['email'], $user['name']);
-
-            // Content
-            $mail->isHTML(false);
-            $mail->Subject = "You have been assigned a new location";
-            $login_url = "https://geotrack-wclf.onrender.com/login.php";
-            $mail->Body = "Hello {$user['name']},\n\nYou have been assigned to location: $location_name.\n\nYou can time in at: $login_url\n\nThank you!";
-
-            $mail->send();
-        } catch (Exception $e) {
-            $errors[] = "Mail error for {$user['email']}: " . $mail->ErrorInfo;
-        }
-    }
-
-    if (count($errors) === 0) {
-        $response['success'] = true;
-        $response['message'] = "Users assigned and email sent!";
-    } else {
-        $response['message'] = implode("\n", $errors);
-    }
-    echo json_encode($response);
-    exit;
 }
 
-// If not POST
-$response['message'] = "Invalid request method.";
-echo json_encode($response);
-exit;
-?>
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Get POST data (adjust field names to your form)
+    $user_id = $_POST['user_id'] ?? null;
+    $lat = $_POST['lat'] ?? null;
+    $lng = $_POST['lng'] ?? null;
 
+    if ($user_id && $lat && $lng) {
+        // Update user location assignment in DB
+        $stmt = $conn->prepare("UPDATE users SET assigned_lat = ?, assigned_lng = ? WHERE id = ?");
+        $stmt->bind_param("ddi", $lat, $lng, $user_id);
+
+        if ($stmt->execute()) {
+            // Fetch user info to get email and name
+            $user_stmt = $conn->prepare("SELECT name, email FROM users WHERE id = ?");
+            $user_stmt->bind_param("i", $user_id);
+            $user_stmt->execute();
+            $user_result = $user_stmt->get_result();
+
+            if ($user_result->num_rows === 1) {
+                $user = $user_result->fetch_assoc();
+                $to_email = $user['email'];
+                $to_name = $user['name'];
+
+                // Send notification email
+                if (sendAssignmentEmail($to_email, $to_name, $lat, $lng)) {
+                    echo "✅ Location assigned and email sent to $to_name";
+                } else {
+                    echo "⚠️ Location assigned but failed to send email.";
+                }
+            } else {
+                echo "❌ User not found.";
+            }
+        } else {
+            echo "❌ Failed to assign location.";
+        }
+    } else {
+        echo "❌ Missing required fields.";
+    }
+} else {
+    echo "❌ Invalid request method.";
+}
+?>
