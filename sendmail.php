@@ -22,7 +22,7 @@ try {
 
     // ✅ Gmail credentials (App Password-based)
     $mail->Username   = 'capstoneprojecttwenty25@gmail.com';
-    $mail->Password   = 'fhsy pvdl arkx wmdo'; // Replace this with your new App Password if regenerated
+    $mail->Password   = 'wcqhdqyfghhgygkcb'; // Replace this with your new App Password if regenerated
 
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port       = 587;
