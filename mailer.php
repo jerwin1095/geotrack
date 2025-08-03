@@ -1,46 +1,64 @@
 <?php
+// Load PHPMailer classes
+require 'PHPMailer/Exception.php';
+require 'PHPMailer/PHPMailer.php';
+require 'PHPMailer/SMTP.php';
+
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-require 'PHPMailer/src/Exception.php';
-require 'PHPMailer/src/PHPMailer.php';
-require 'PHPMailer/src/SMTP.php';
-
-function sendAssignmentEmail($to_email, $to_name, $lat, $lng) {
+/**
+ * Send email via Brevo SMTP using PHPMailer
+ * 
+ * @param string $to Recipient email address
+ * @param string $subject Email subject
+ * @param string $body Email HTML body content
+ * @return bool True on success, False on failure
+ */
+function sendEmail($to, $subject, $body) {
     $mail = new PHPMailer(true);
 
     try {
-        // Enable verbose debug output (0 = off, 2 = debug)
-        $mail->SMTPDebug = 2;
-        $mail->Debugoutput = function($str, $level) {
-            echo "SMTP Debug [$level]: $str<br>";
-        };
-
+        //Server settings
         $mail->isSMTP();
-        $mail->Host       = 'smtp-relay.brevo.com';
+        $mail->Host       = 'smtp-relay.brevo.com';    // Brevo SMTP server
         $mail->SMTPAuth   = true;
-        $mail->Username   = '93d527001@smtp-brevo.com';
-        $mail->Password   = 'bEgqyd3WImxRLGwD';
-        $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        $mail->Username   = '93d527001@smtp-brevo.com';  // Your Brevo SMTP login
+        $mail->Password   = 'bEgqyd3WImxRLGwD';          // Your Brevo SMTP password
+        $mail->SMTPSecure = 'tls';                        // Encryption - tls or ssl
         $mail->Port       = 587;
 
-        // Set sender and recipient
-        $mail->setFrom('capstoneprojecttwenty25@gmail.com', 'GeoTrack Mailer');
-        $mail->addAddress($to_email, $to_name);
+        //Recipients
+        $mail->setFrom('capstoneprojecttwenty25@gmail.com', 'GeoTrack Mailer'); // Verified sender email & name
+        $mail->addAddress($to);
 
-        // Email content
-        $mail->Subject = "📍 New Location Assigned to You";
-        $mail->Body    = "Hi $to_name,\n\nYou’ve been assigned a new location:\nLatitude: $lat\nLongitude: $lng\n\nPlease check your GeoTrack dashboard.";
+        // Content
+        $mail->isHTML(true);
+        $mail->Subject = $subject;
+        $mail->Body    = $body;
 
-        // Send email
         $mail->send();
-
         return true;
-
     } catch (Exception $e) {
-        // Show error for debugging
-        echo "Mailer Error: " . $mail->ErrorInfo;
+        error_log("Mailer Error: {$mail->ErrorInfo}");
         return false;
+    }
+}
+
+// Example usage (remove this when integrating into your system)
+if (php_sapi_name() !== 'cli') {
+    $testRecipient = 'luchiloo10@gmail.com';
+    $testSubject = 'GeoTrack SMTP Test';
+    $testBody = "
+        <p>Hello Recipient Name,</p>
+        <p>This is a test email sent from GeoTrack using PHPMailer and Brevo SMTP.</p>
+        <p>If you're seeing this, SMTP is working correctly! 🎉</p>
+    ";
+
+    if (sendEmail($testRecipient, $testSubject, $testBody)) {
+        echo 'Test email sent successfully!';
+    } else {
+        echo 'Failed to send test email.';
     }
 }
 ?>
