@@ -8,21 +8,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'], $_POST['p
     $username = trim($_POST['username']);
     $password = $_POST['password'];
 
-    $sql = "SELECT password FROM admins WHERE username = $1";
-    $result = pg_query_params($conn, $sql, [$username]);
+    // Optional: Validate username format
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
+        $error = 'Invalid username format.';
+    } else {
+        $sql = "SELECT password FROM admins WHERE username = $1";
+        $result = pg_query_params($conn, $sql, [$username]);
 
-    if ($result && pg_num_rows($result) === 1) {
-        $row = pg_fetch_assoc($result);
-        $hashed_password = $row['password'];
-        if (password_verify($password, $hashed_password)) {
-            $_SESSION['admin'] = $username;
-            header('Location: dashboard.php');
-            exit();
+        if ($result && pg_num_rows($result) === 1) {
+            $row = pg_fetch_assoc($result);
+            $hashed_password = $row['password'];
+            if (password_verify($password, $hashed_password)) {
+                $_SESSION['admin'] = $username;
+                header('Location: dashboard.php');
+                exit();
+            } else {
+                $error = 'Invalid username or password.';
+            }
         } else {
             $error = 'Invalid username or password.';
         }
-    } else {
-        $error = 'Invalid username or password.';
     }
 }
 ?>
