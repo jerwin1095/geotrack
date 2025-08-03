@@ -7,29 +7,29 @@ require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
 
-// Recipient details — update dynamically if pulling from database
+// Recipient details
 $to_email = "luchiloo10@gmail.com";   // User email
-$to_name = "Luchiloo";                // User name
+$to_name  = "Luchiloo";               // User name
 
-// Create PHPMailer instance
 $mail = new PHPMailer(true);
 
 try {
     // SMTP Configuration
-    $mail->SMTPDebug = 2;  // Debugging output; set to 0 in production
+    $mail->SMTPDebug = 2;  // Set to 0 for production
     $mail->isSMTP();
     $mail->Host       = 'smtp.gmail.com';
     $mail->SMTPAuth   = true;
 
-    // Secure credentials from Render environment variables
-    $mail->Username   = getenv('SMTP_USERNAME');   // Example: capstoneprojecttwenty25@gmail.com
-    $mail->Password   = getenv('SMTP_PASSWORD');   // Your Gmail App Password
+    // Secure credentials from environment
+    $mail->Username   = getenv('SMTP_USERNAME');
+    $mail->Password   = getenv('SMTP_PASSWORD');
+
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port       = 587;
 
     // Sender and recipient
-    $mail->setFrom($mail->Username, 'Geo-TrackDTR');    // Admin sender label
-    $mail->addAddress($to_email, $to_name);             // User recipient
+    $mail->setFrom($mail->Username, 'Geo-TrackDTR');
+    $mail->addAddress($to_email, $to_name);
 
     // Email content
     $mail->Subject = 'Welcome to Geo-TrackDTR!';
