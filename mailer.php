@@ -1,40 +1,33 @@
 <?php
-require 'PHPMailer/Exception.php';
-require 'PHPMailer/PHPMailer.php';
-require 'PHPMailer/SMTP.php';
-
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-function sendEmail($to, $subject, $body) {
-    $mail = new PHPMailer(true);
+require 'PHPMailer/src/Exception.php';
+require 'PHPMailer/src/PHPMailer.php';
+require 'PHPMailer/src/SMTP.php';
 
+function send_notification($location, $ip, $mac) {
+    $mail = new PHPMailer(true);
     try {
-        // SMTP configuration
         $mail->isSMTP();
-        $mail->Host       = 'smtp-relay.brevo.com';
+        $mail->Host       = 'smtp.gmail.com';
         $mail->SMTPAuth   = true;
-        $mail->Username   = '93d527001@smtp-brevo.com'; // Your Brevo SMTP username
-        $mail->Password   = 'bEgqyd3WImxRLGwD';         // Your Brevo SMTP password
+        $mail->Username   = 'capstoneprojecttwenty25@gmail.com';
+        $mail->Password   = 'your_app_password_here'; // Use actual App Password
         $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
         $mail->Port       = 587;
 
-        // Sender info
         $mail->setFrom('capstoneprojecttwenty25@gmail.com', 'GeoTrack Mailer');
+        $mail->addAddress('recipient@example.com', 'Recipient Name');
 
-        // Recipient
-        $mail->addAddress($to);
-
-        // Email content
-        $mail->isHTML(true);
-        $mail->Subject = $subject;
-        $mail->Body    = $body;
+        $mail->Subject = "GeoTrack Location Assigned";
+        $mail->Body    = "Location: $location\nIP: $ip\nMAC: $mac";
 
         $mail->send();
         return true;
-
     } catch (Exception $e) {
         error_log("Mailer Error: {$mail->ErrorInfo}");
         return false;
     }
 }
+?>
