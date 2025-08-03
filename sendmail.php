@@ -2,44 +2,36 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Include PHPMailer classes
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
 
-// Recipient details
-$to_email = "luchiloo10@gmail.com";   // User email
-$to_name  = "Luchiloo";               // User name
+$to_email = 'luchiloo10@gmail.com';
+$to_name = 'Recipient Name';
 
 $mail = new PHPMailer(true);
 
 try {
-    // SMTP Configuration
-    $mail->SMTPDebug = 2;  // Set to 0 for production
+    $mail->SMTPDebug = 2; // Set to 0 to suppress output
     $mail->isSMTP();
-    $mail->Host       = 'smtp.gmail.com';
-    $mail->SMTPAuth   = true;
+    $mail->Host = 'smtp.gmail.com';
+    $mail->SMTPAuth = true;
 
-    // Secure credentials from environment
-    $mail->Username   = getenv('SMTP_USERNAME');
-    $mail->Password   = getenv('SMTP_PASSWORD');
+    // Use environment variables for secure config
+    $mail->Username = getenv('SMTP_USERNAME');  // e.g., capstoneprojecttwenty25@gmail.com
+    $mail->Password = getenv('SMTP_PASSWORD');  // App Password, NOT Gmail login
 
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->Port       = 587;
+    $mail->Port = 587;
 
-    // Sender and recipient
-    $mail->setFrom($mail->Username, 'Geo-TrackDTR');
+    $mail->setFrom(getenv('SMTP_USERNAME'), 'Geo-TrackDTR');
     $mail->addAddress($to_email, $to_name);
+    $mail->Subject = 'Test Email';
+    $mail->Body = "Hello $to_name, this is a test email from Geo-TrackDTR.";
 
-    // Email content
-    $mail->Subject = 'Welcome to Geo-TrackDTR!';
-    $mail->Body    = "Hi $to_name,\n\nYou're now successfully registered in our system.\n\nBest,\nGeo-TrackDTR Admin";
-
-    // Send the email
     $mail->send();
-    echo '✅ Message sent successfully to ' . $to_email;
+    echo '✅ Message sent successfully.';
 } catch (Exception $e) {
-    echo "❌ Mailer Exception: " . $e->getMessage() . "<br>";
-    echo "📄 PHPMailer Info: " . $mail->ErrorInfo;
+    echo "❌ Mailer Error: {$mail->ErrorInfo}";
 }
 ?>
