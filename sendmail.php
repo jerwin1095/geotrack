@@ -2,38 +2,36 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Load PHPMailer classes
 require 'PHPMailer/src/Exception.php';
 require 'PHPMailer/src/PHPMailer.php';
 require 'PHPMailer/src/SMTP.php';
 
-// Recipient info
-$to_email = 'luchiloo10@gmail.com';  // You can change this to any test email
+$to_email = 'luchiloo10@gmail.com';
 $to_name = 'Recipient Name';
 
 $mail = new PHPMailer(true);
 
 try {
-    // SMTP Config
-    $mail->SMTPDebug = 2; // Set to 0 to suppress debug output
+    $mail->SMTPDebug = 2; // Set to 0 for production
     $mail->isSMTP();
     $mail->Host       = 'smtp.gmail.com';
     $mail->SMTPAuth   = true;
 
-    // Gmail credentials
+    // ✅ Hardcoded credentials (for testing only!)
     $mail->Username   = 'capstoneprojecttwenty25@gmail.com';
-    $mail->Password   = 'fhsy pvdl arkx wmdo';  // App password (keep secure!)
+    $mail->Password   = 'fhsy pvdl arkx wmdo'; // Gmail App Password
 
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port       = 587;
 
-    // Email content
+    // Sender and recipient
     $mail->setFrom('capstoneprojecttwenty25@gmail.com', 'GeoTrack Mailer');
     $mail->addAddress($to_email, $to_name);
-    $mail->Subject = '🚀 GeoTrack Test Email';
-    $mail->Body    = "Hello $to_name,\n\nThis is a test email from GeoTrack deployed on Render.\n\nIf you're reading this, SMTP is working! 🎉";
 
-    // Send it
+    // Email content
+    $mail->Subject = '🚀 GeoTrack SMTP Test';
+    $mail->Body    = "Hello $to_name,\n\nThis is a test email sent from GeoTrack using PHPMailer and Gmail SMTP.\n\nIf you're seeing this, SMTP is working correctly! 🎉";
+
     $mail->send();
     echo "✅ Message sent successfully to $to_email";
 } catch (Exception $e) {
