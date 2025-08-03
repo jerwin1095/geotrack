@@ -9,21 +9,18 @@ require 'PHPMailer/src/SMTP.php';
 
 // Recipient info
 $to_email = 'luchiloo10@gmail.com';
-$to_name = 'Recipient Name';
+$to_name  = 'Recipient Name';
 
 $mail = new PHPMailer(true);
 
 try {
     // SMTP configuration
-    $mail->SMTPDebug = 0; // Show verbose output for debugging
+    $mail->SMTPDebug  = 0;
     $mail->isSMTP();
     $mail->Host       = 'smtp.gmail.com';
     $mail->SMTPAuth   = true;
-
-    // ✅ Gmail credentials (App Password-based)
     $mail->Username   = 'capstoneprojecttwenty25@gmail.com';
-    $mail->Password   = 'wcqhdqyfghhgygkcb'; // Replace this with your new App Password if regenerated
-
+    $mail->Password   = 'wcqhdqyfghhgygkcb'; // App Password, no spaces
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port       = 587;
 
