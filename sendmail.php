@@ -1,41 +1,16 @@
 <?php
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
+require_once 'mailer.php';
 
-// Include PHPMailer classes
-require 'PHPMailer/src/Exception.php';
-require 'PHPMailer/src/PHPMailer.php';
-require 'PHPMailer/src/SMTP.php';
-
-// Recipient info
+// Fetch these dynamically from your database or user management system
 $to_email = 'luchiloo10@gmail.com';
-$to_name  = 'Recipient Name';
+$to_name  = 'albert';
+$lat      = '7.1867';
+$lng      = '125.4752';
 
-$mail = new PHPMailer(true);
-
-try {
-    // SMTP configuration
-    $mail->SMTPDebug  = 0;
-    $mail->isSMTP();
-    $mail->Host       = 'smtp-relay.brevo.com';
-    $mail->SMTPAuth   = true;
-    $mail->Username   = '93d527001@smtp-brevo.com';   // From Brevo dashboard
-    $mail->Password   = 'bEgqyd3WImxRLGwD';           // From Brevo dashboard
-    $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-    $mail->Port       = 587;
-
-    // Sender and recipient
-    $mail->setFrom('capstoneprojecttwenty25@gmail.com', 'GeoTrack Mailer'); // Must be verified in Brevo
-    $mail->addAddress($to_email, $to_name);
-
-    // Email content
-    $mail->Subject = '🚀 GeoTrack SMTP Test (via Brevo)';
-    $mail->Body    = "Hello $to_name,\n\nThis is a test email sent from GeoTrack using PHPMailer and Brevo SMTP.\n\nIf you're seeing this, SMTP is working correctly! 🎉";
-
-    // Send email
-    $mail->send();
-    echo "✅ Message sent successfully to $to_email";
-} catch (Exception $e) {
-    echo "❌ Mailer Error: {$mail->ErrorInfo}";
+// Send the email
+if (sendAssignmentEmail($to_email, $to_name, $lat, $lng)) {
+    echo "✅ Email sent successfully to $to_name ($to_email)";
+} else {
+    echo "❌ Failed to send email";
 }
 ?>
