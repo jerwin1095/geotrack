@@ -2,10 +2,10 @@
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
-// Include PHPMailer classes with full path
-require __DIR__ . '/PHPMailer/src/Exception.php';
-require __DIR__ . '/PHPMailer/src/PHPMailer.php';
-require __DIR__ . '/PHPMailer/src/SMTP.php';
+// Use absolute paths relative to this file
+require __DIR__ . '/PHPMailer/Exception.php';
+require __DIR__ . '/PHPMailer/PHPMailer.php';
+require __DIR__ . '/PHPMailer/SMTP.php';
 
 // Recipient info
 $to_email = 'luchiloo10@gmail.com';
@@ -20,7 +20,7 @@ try {
     $mail->Host       = 'smtp.gmail.com';
     $mail->SMTPAuth   = true;
     $mail->Username   = 'capstoneprojecttwenty25@gmail.com';
-    $mail->Password   = 'wcqhdqyfghhgygkcb'; // App Password, no spaces
+    $mail->Password   = 'wcqhdqyfghhgygkcb'; // Your app password
     $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
     $mail->Port       = 587;
 
@@ -38,4 +38,3 @@ try {
 } catch (Exception $e) {
     echo "❌ Mailer Error: {$mail->ErrorInfo}";
 }
-?>
