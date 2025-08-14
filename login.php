@@ -14,22 +14,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'], $_POST['p
     if (!preg_match('/^[a-zA-Z0-9_]+$/', $username)) {
         $error = 'Invalid username format.';
     } else {
-        $sql = "SELECT password FROM admins WHERE username = $1";
-        $result = pg_query_params($conn, $sql, [$username]);
+        $query = "SELECT id, username, password, role FROM users WHERE username = $1";
+        $result = pg_query_params($conn, $query, [$username]);
 
         if ($result && pg_num_rows($result) === 1) {
-            $row = pg_fetch_assoc($result);
-            $hashed_password = $row['password'];
+            $user = pg_fetch_assoc($result);
+            if (password_verify($password, $user['password'])) {
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['role'] = $user['role'];
 
-            if (password_verify($password, $hashed_password)) {
-                $_SESSION['admin'] = $username;
-                header('Location: dashboard.php');
+                if ($user['role'] === 'admin') {
+                    header('Location: dashboard.php');
+                } elseif ($user['role'] === 'user') {
+                    header('Location: user_dashboard.php');
+                } else {
+                    $error = 'Unknown role assigned.';
+                }
                 exit();
             } else {
-                $error = 'Invalid username or password.';
+                $error = 'Incorrect password.';
             }
         } else {
-            $error = 'Invalid username or password.';
+            $error = 'Username not found.';
         }
     }
 }
