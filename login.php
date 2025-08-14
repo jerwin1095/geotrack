@@ -20,16 +20,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'], $_POST['p
         if ($result && pg_num_rows($result) === 1) {
             $user = pg_fetch_assoc($result);
             if (password_verify($password, $user['password'])) {
-                $_SESSION['username'] = $user['username'];
                 $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
                 $_SESSION['role'] = $user['role'];
 
+                // Redirect based on role
                 if ($user['role'] === 'admin') {
                     header('Location: dashboard.php');
                 } elseif ($user['role'] === 'user') {
                     header('Location: user_dashboard.php');
                 } else {
-                    $error = 'Unknown role assigned.';
+                    $error = 'Invalid user role.';
                 }
                 exit();
             } else {
@@ -41,6 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['username'], $_POST['p
     }
 }
 ?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
